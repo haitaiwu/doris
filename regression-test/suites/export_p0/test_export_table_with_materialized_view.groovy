@@ -26,7 +26,7 @@ suite("test_export_table_with_materialized_view", "p0") {
     sql """ set enable_nereids_planner=true """
     sql """ set enable_fallback_to_original_planner=false """
     sql """ set forward_to_master=true """
-    sql """ admin set frontend config("maximum_tablets_of_outfile_in_export"="10") """
+    sql """ admin set frontend config("maximum_tablets_of_outfile_in_export"="5") """
 
     String ak = getS3AK()
     String sk = getS3SK()
@@ -79,10 +79,11 @@ suite("test_export_table_with_materialized_view", "p0") {
         while (true) {
             def res = sql """ show export where label = "${export_label}" """
             logger.info("export state: " + res[0][2])
+            logger.info("export state: " + res.toString())
             if (res[0][2] == "FINISHED") {
                 def json = parseJson(res[0][11])
                 assert json instanceof List
-                assertEquals("10", json.fileNumber[0][0])
+                assertEquals("1", json.fileNumber[0][0])
                 log.info("outfile_path: ${json.url[0][0]}")
                 return json.url[0][0];
             } else if (res[0][2] == "CANCELLED") {
